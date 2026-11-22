@@ -33,10 +33,13 @@ jobs:
         shell: bash
         run: |
           if [[ -f Cargo.toml ]]; then
-            git ls-files --error-unmatch -- Cargo.lock >/dev/null && test -f Cargo.lock
+            if [[ ! -f Cargo.lock ]] || ! git ls-files --error-unmatch -- Cargo.lock >/dev/null; then
+              echo 'Commit Cargo.lock with the root Cargo workspace.' >&2
+              exit 1
+            fi
             echo 'workspace=true' >> "$GITHUB_OUTPUT"
           else
-            if git ls-files --error-unmatch -- '**/Cargo.toml' 'Cargo.lock' >/dev/null 2>&1; then
+            if [[ -n "$(git ls-files -- '**/Cargo.toml' 'Cargo.lock')" ]]; then
               echo 'Commit the root Cargo workspace and lockfile together.' >&2
               exit 1
             fi
