@@ -1,0 +1,1 @@
+Follow [AGENTS.md](../AGENTS.md). Start with [the handoff](../HANDOFF.md) and the assigned milestone. Use GPT-6 Luna at medium in a host that exposes that configuration. The workflow is provider-independent. Run Cargo compilation and Rust verification through GitHub Actions and link the exact run in the handoff.

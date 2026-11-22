@@ -1,0 +1,21 @@
+name: Implementation task
+description: Plan one milestone slice with an acceptance gate.
+body:
+  - type: input
+    id: milestone
+    attributes:
+      label: Milestone and requirement IDs
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope, dependencies and expected observable behavior
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Acceptance tests, supported targets and evidence
+    validations:
+      required: true
