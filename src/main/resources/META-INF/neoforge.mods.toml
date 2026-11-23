@@ -5,6 +5,7 @@ issueTrackerURL="https://github.com/TrissTheBoss/NeoSunset/issues"
 modId="neosunset"
 version="${version}"
 displayName="NeoSunset"
+logoFile="neosunset.png"
 displayTest="IGNORE_ALL_VERSION"
 description="Optional refresh-aware presentation for the Minecraft Java client."
 

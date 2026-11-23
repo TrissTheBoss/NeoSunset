@@ -5,6 +5,7 @@
   "name": "NeoSunset",
   "description": "Optional refresh-aware presentation for the Minecraft Java client.",
   "license": "MIT",
+  "icon": "neosunset.png",
   "environment": "client",
   "mixins": ["neosunset.mixins.json"],
   "depends": {

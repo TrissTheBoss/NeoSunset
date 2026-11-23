@@ -114,6 +114,7 @@ jobs:
           channel: ${{ needs.build.outputs.channel }}
           loaders: '["fabric", "quilt", "forge", "neoforge"]'
           game-versions: '26.3'
+          environment: client_only
           files: release/neosunset-${{ needs.build.outputs.version }}.jar
           changelog: 'Release notes and source: https://github.com/TrissTheBoss/NeoSunset/tree/${{ github.sha }}.'
       - name: Record the published version ID

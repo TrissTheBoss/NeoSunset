@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+from struct import unpack
 import tomllib
 from zipfile import ZipFile
 
@@ -39,6 +40,12 @@ with ZipFile(Path(f"build/libs/neosunset-{version}.jar")) as jar:
     mixin = json.loads(jar.read("neosunset.mixins.json"))
     assert fabric["version"] == version and fabric["depends"]["minecraft"] == f"={game}"
     assert fabric["environment"] == "client" and "LICENSE" in names
+    icon_path = "neosunset.png"
+    icon = jar.read(icon_path)
+    assert fabric["icon"] == icon_path
+    assert icon == Path("src/main/resources", icon_path).read_bytes()
+    assert icon.startswith(b"\x89PNG\r\n\x1a\n") and icon[12:16] == b"IHDR"
+    assert unpack(">II", icon[16:24]) == (128, 128)
     assert len(mixin["client"]) == 4
     assert not any("ClientSmokeMixin" in name for name in names)
     for client in mixin["client"]:
@@ -46,6 +53,7 @@ with ZipFile(Path(f"build/libs/neosunset-{version}.jar")) as jar:
     for file in ("mods.toml", "neoforge.mods.toml"):
         config = tomllib.loads(jar.read(f"META-INF/{file}").decode())
         assert config["mods"][0]["version"] == version
+        assert config["mods"][0]["logoFile"] == icon_path
         assert config["dependencies"]["neosunset"][0]["versionRange"] == f"[{game}]"
     for name in names:
         if name.endswith(".class") and not name.startswith("dev/neosunset/"):
