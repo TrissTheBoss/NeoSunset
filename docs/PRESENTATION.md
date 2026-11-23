@@ -10,6 +10,8 @@ A timer estimates refresh cadence. It cannot prove which frames the display scan
 
 When eligible, request the existing RenderPearl Mailbox present mode if the device offers it and the game's choice would otherwise be Immediate. The Vulkan implementation owns image acquisition, submission, signaling and swapchain resets. Mailbox lets the presentation engine replace a queued frame. Vulkan still queues every submitted present, and a Vulkan device without Mailbox preserves the game's mode.
 
+To verify Vulkan mode selection, check `logs/latest.log` for `Vulkan swapchain present mode:`. This diagnostic logs the initial mode and subsequent changes after successful swapchain configuration. With a focused game, Unlimited FPS and VSync off, record the mode with NeoSunset presentation off, then on. If the baseline is Immediate and Mailbox is supported, expect Mailbox when on. Leave presentation on and set a finite cap, then repeat with Unlimited FPS and VSync on. Compare each fallback against the mode with NeoSunset off under the same settings. An unchanged mode is not logged again for that surface; restart with the desired options if you need a fresh baseline.
+
 ## Compatibility policy
 
 Match the selected Unlimited sentinel and the effective vanilla limit. The OpenGL swap additionally checks the limiter value used by the renderer for that frame. Default-off stays off. A clean loader profile is eligible. Profiles that introduce unknown mods stay usable while NeoSunset leaves presentation alone. There is no generic discovery API for mods that independently sleep, wrap native calls or change the driver. Admit a mod combination only after it has a reliable pacing signal and test evidence, including a test that changes the competing cap at runtime.
