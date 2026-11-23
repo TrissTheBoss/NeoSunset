@@ -5,8 +5,10 @@
   "priority": 900,
   "client": [
     "GlSurfaceMixin",
+    "HudMixin",
     "MinecraftMixin",
     "VideoSettingsMixin",
+    "VulkanGpuSurfaceMixin",
     "WindowMixin"
   ],
   "injectors": {

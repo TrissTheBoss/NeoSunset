@@ -5,6 +5,7 @@ import com.mojang.renderpearl.backend.opengl.GlSurface;
 import dev.neosunset.DisplayChanges;
 import dev.neosunset.FramePolicy;
 import dev.neosunset.PresentationSettings;
+import dev.neosunset.PresentRate;
 import dev.neosunset.SwapCadence;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.sdl.SDLVideo;
@@ -24,6 +25,12 @@ abstract class GlSurfaceMixin {
     @Unique private boolean neosunset$wasEligible;
     @Unique private int neosunset$displayGeneration;
     @Unique private long neosunset$lastProbe;
+
+    @Inject(method = "present()V", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
+            target = "Lorg/lwjgl/sdl/SDLVideo;SDL_GL_SwapWindow(J)Z"))
+    private void neosunset$countSwapAttempt(CallbackInfo callback) {
+        PresentRate.CLIENT.recordAttempt();
+    }
 
     @Inject(method = "present", at = @At(value = "INVOKE",
             target = "Lorg/lwjgl/sdl/SDLVideo;SDL_GL_SwapWindow(J)Z"), cancellable = true)
