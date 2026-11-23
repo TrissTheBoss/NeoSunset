@@ -45,4 +45,4 @@ jobs:
           timeout --kill-after=20s 10m xvfb-run -a -s '-screen 0 1280x720x24' \
             .ci-venv/bin/python .github/smoke_loader.py "$LOADER" "$RUNNER_TEMP/smoke" \
             build/libs/neosunset-*.jar 2>&1 | tee smoke.log
-          grep -Fxq NEOSUNSET_CLIENT_SMOKE_PASS smoke.log
+          test "$(cat "$RUNNER_TEMP/smoke/neosunset-smoke-pass")" = PASS

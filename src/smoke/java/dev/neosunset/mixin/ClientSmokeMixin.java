@@ -48,7 +48,7 @@ abstract class ClientSmokeMixin {
         verify(Files.readString(config).equals("true\n"), "Opt-in was not saved");
         option.set(false);
         verify(Files.readString(config).equals("false\n"), "Opt-out was not saved");
-        System.out.println("NEOSUNSET_CLIENT_SMOKE_PASS");
+        Files.writeString(client.gameDirectory.toPath().resolve("neosunset-smoke-pass"), "PASS\n");
         client.stop();
     }
 

@@ -5,8 +5,9 @@ import java.util.List;
 import java.util.Set;
 
 public final class ProfileCompatibility {
-    private static final Set<String> BUILT_INS =
-            Set.of("neosunset", "minecraft", "java", "fabricloader", "quilt_loader", "forge", "neoforge");
+    private static final System.Logger LOGGER = System.getLogger("NeoSunset");
+    private static final Set<String> BUILT_INS = Set.of(
+            "neosunset", "minecraft", "java", "fabricloader", "quilt_loader", "forge", "neoforge", "mixinextras");
 
     private ProfileCompatibility() {
     }
@@ -44,7 +45,7 @@ public final class ProfileCompatibility {
                         container.getMethod("getMetadata"), metadata.getMethod("getId"));
             }
         } catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) {
-            // A missing or incompatible loader API is an unverified profile.
+            LOGGER.log(System.Logger.Level.INFO, "Could not verify the loader profile", ignored);
         }
         return false;
     }
@@ -57,7 +58,11 @@ public final class ProfileCompatibility {
             Object metadata = metadataMethod == null ? mod : metadataMethod.invoke(mod);
             ids.add((String) readId.invoke(metadata));
         }
-        return areBuiltIns(ids);
+        boolean verified = areBuiltIns(ids);
+        if (!verified) {
+            LOGGER.log(System.Logger.Level.INFO, "Refresh-aware presentation is idle in this profile: {0}", ids);
+        }
+        return verified;
     }
 
     private static boolean hasClass(String name) {

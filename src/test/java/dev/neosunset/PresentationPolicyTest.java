@@ -20,7 +20,7 @@ class PresentationPolicyTest {
 
     @Test
     void declinesUnknownModsAndFailedLoaderDiscovery() {
-        assertTrue(ProfileCompatibility.areBuiltIns(List.of("minecraft", "fabricloader", "neosunset", "java")));
+        assertTrue(ProfileCompatibility.areBuiltIns(List.of("minecraft", "fabricloader", "neosunset", "java", "mixinextras")));
         assertFalse(ProfileCompatibility.areBuiltIns(List.of("minecraft", "neosunset", "fps-limiter")));
         assertFalse(ProfileCompatibility.areBuiltIns(List.of()));
     }
