@@ -1,0 +1,15 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "dev.neosunset.mixin",
+  "priority": 900,
+  "client": [
+    "GlSurfaceMixin",
+    "MinecraftMixin",
+    "VideoSettingsMixin",
+    "WindowMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

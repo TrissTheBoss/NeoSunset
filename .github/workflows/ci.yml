@@ -1,162 +1,70 @@
-name: CI
+name: Build and release
 
 on:
   pull_request:
   push:
-  workflow_dispatch:
+    branches: ['**']
+    tags: ['v*']
 
 permissions:
   contents: read
 
-concurrency:
-  group: ci-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  handbook:
-    name: Handbook
+  build:
+    name: Build and test (Java 25)
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 20
     outputs:
-      workspace: ${{ steps.stage.outputs.workspace }}
+      version: ${{ steps.release.outputs.version }}
+      channel: ${{ steps.release.outputs.channel }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - name: Validate handbook
-        run: python3 .github/scripts/check_handbook.py
-      - name: Detect the Cargo workspace
-        id: stage
-        shell: bash
-        run: |
-          if [[ -f Cargo.toml ]]; then
-            if [[ ! -f Cargo.lock ]] || ! git ls-files --error-unmatch -- Cargo.lock >/dev/null; then
-              echo 'Commit Cargo.lock with the root Cargo workspace.' >&2
-              exit 1
-            fi
-            echo 'workspace=true' >> "$GITHUB_OUTPUT"
-          else
-            if [[ -n "$(git ls-files -- '**/Cargo.toml' 'Cargo.lock')" ]]; then
-              echo 'Commit the root Cargo workspace and lockfile together.' >&2
-              exit 1
-            fi
-            echo 'workspace=false' >> "$GITHUB_OUTPUT"
-            echo 'Handbook stage. No Rust workspace exists.' >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-  platform:
-    name: ${{ matrix.platform }}
-    needs: handbook
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: Windows AMD64
-            runner: windows-2025
-            arch: X64
-            target: x86_64-pc-windows-msvc
-            binary: neosunset.exe
-          - platform: Windows ARM64
-            runner: windows-11-arm
-            arch: ARM64
-            target: aarch64-pc-windows-msvc
-            binary: neosunset.exe
-          - platform: Linux ARM64
-            runner: ubuntu-24.04-arm
-            arch: ARM64
-            target: aarch64-unknown-linux-gnu
-            binary: neosunset
-          - platform: macOS Apple Silicon
-            runner: macos-15
-            arch: ARM64
-            target: aarch64-apple-darwin
-            binary: neosunset
-          - platform: macOS Intel
-            runner: macos-15-intel
-            arch: X64
-            target: x86_64-apple-darwin
-            binary: neosunset
-    defaults:
-      run:
-        shell: pwsh
-    env:
-      EXPECTED_ARCH: ${{ matrix.arch }}
-      RUST_TARGET: ${{ matrix.target }}
-      BINARY_NAME: ${{ matrix.binary }}
-    steps:
-      - name: Verify native runner
-        env:
-          WORKSPACE_PRESENT: ${{ needs.handbook.outputs.workspace }}
-        run: |
-          if ($env:RUNNER_ARCH -ne $env:EXPECTED_ARCH) {
-            throw "Expected $env:EXPECTED_ARCH, got $env:RUNNER_ARCH"
-          }
-          if ($env:WORKSPACE_PRESENT -eq 'false') {
-            'Native runner verified. Rust compilation begins when the workspace lands.' >> $env:GITHUB_STEP_SUMMARY
-          }
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        if: needs.handbook.outputs.workspace == 'true'
+      - uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
         with:
-          persist-credentials: false
-      - name: Verify pinned Rust toolchain and host
-        if: needs.handbook.outputs.workspace == 'true'
-        run: |
-          $version = rustc -vV
-          if ($LASTEXITCODE -ne 0) { throw 'Unable to run the pinned Rust compiler' }
-          $version
-          if ($version -notcontains "host: $env:RUST_TARGET") {
-            throw "Expected a native Rust toolchain for $env:RUST_TARGET"
-          }
-      - name: Format
-        if: needs.handbook.outputs.workspace == 'true'
-        run: cargo fmt --all -- --check
-      - name: Lint
-        if: needs.handbook.outputs.workspace == 'true'
-        run: cargo clippy --locked --workspace --all-targets --target $env:RUST_TARGET -- -D warnings
-      - name: Test
-        if: needs.handbook.outputs.workspace == 'true'
-        run: cargo test --locked --workspace --target $env:RUST_TARGET
-      - name: Document
-        if: needs.handbook.outputs.workspace == 'true'
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # v5.0.0
+        with:
+          gradle-version: '9.6.0'
+          cache-read-only: true
+      - name: Build and run policy tests
+        run: gradle --no-daemon build
+      - name: Verify version and packaged resources
+        id: release
         env:
-          RUSTDOCFLAGS: -D warnings
-        run: cargo doc --locked --no-deps --workspace --target $env:RUST_TARGET
-      - name: Build release profile
-        if: needs.handbook.outputs.workspace == 'true'
-        run: cargo build --locked --release --workspace --target $env:RUST_TARGET
-      - name: Package executable with license and checksum
-        if: needs.handbook.outputs.workspace == 'true'
-        run: |
-          New-Item -ItemType Directory -Path dist/payload -Force | Out-Null
-          Copy-Item "target/$env:RUST_TARGET/release/$env:BINARY_NAME" dist/payload/
-          Copy-Item -Path LICENSE, README.md -Destination dist/payload/
-          $archive = "neosunset-$env:RUST_TARGET.tar.gz"
-          tar -czf "dist/$archive" -C dist/payload .
-          if ($LASTEXITCODE -ne 0) { throw 'Unable to package the executable' }
-          $sha256 = (Get-FileHash "dist/$archive" -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$sha256  $archive" | Set-Content -Path "dist/$archive.sha256" -Encoding ascii
+          IS_TAG: ${{ github.ref_type == 'tag' }}
+        run: python3 .github/verify_jar.py
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        if: needs.handbook.outputs.workspace == 'true'
         with:
-          name: neosunset-${{ matrix.target }}
-          path: dist/neosunset-*
+          name: NeoSunset-jar
+          path: build/libs/neosunset-*.jar
           if-no-files-found: error
           retention-days: 14
 
-  required:
-    name: Required checks
-    if: always()
-    needs: [handbook, platform]
+  publish:
+    name: Publish verified tag to Modrinth
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    env:
-      HANDBOOK_RESULT: ${{ needs.handbook.result }}
-      PLATFORM_RESULT: ${{ needs.platform.result }}
+    concurrency:
+      group: modrinth-${{ github.ref }}
+      cancel-in-progress: false
     steps:
-      - name: Require successful handbook and platform jobs
-        run: test "$HANDBOOK_RESULT" = success && test "$PLATFORM_RESULT" = success
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: NeoSunset-jar
+          path: release
+      - name: Publish on Modrinth
+        uses: cloudnode-pro/modrinth-publish@3870f66007063f03fb70118ca9eddbc09a4ba666 # v2.5.2
+        with:
+          token: ${{ secrets.modrinth_pat }}
+          project: ${{ secrets.modrinth_id }}
+          version: ${{ needs.build.outputs.version }}
+          channel: ${{ needs.build.outputs.channel }}
+          loaders: fabric
+          game-versions: '26.3'
+          files: release/neosunset-${{ needs.build.outputs.version }}.jar
+          changelog: 'See the source and release notes at https://github.com/TrissTheBoss/NeoSunset/tree/${{ github.sha }}.'

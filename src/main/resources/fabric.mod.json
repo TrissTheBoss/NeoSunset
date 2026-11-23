@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "neosunset",
+  "version": "${version}",
+  "name": "NeoSunset",
+  "description": "Optional refresh-aware presentation for the Minecraft Java client.",
+  "license": "MIT",
+  "environment": "client",
+  "mixins": ["neosunset.mixins.json"],
+  "depends": {
+    "fabricloader": ">=${fabricLoader}",
+    "minecraft": "=${minecraft}",
+    "java": ">=25"
+  },
+  "contact": {
+    "sources": "https://github.com/TrissTheBoss/NeoSunset",
+    "issues": "https://github.com/TrissTheBoss/NeoSunset/issues"
+  }
+}

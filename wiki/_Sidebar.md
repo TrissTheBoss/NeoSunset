@@ -1,6 +1,0 @@
-- [Home](Home.md)
-- [Getting started](Getting-Started.md)
-- [Architecture](Architecture.md)
-- [Platform support](Platform-Support.md)
-- [Testing](Testing.md)
-- [Packs and modules](Modding.md)

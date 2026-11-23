@@ -1,0 +1,38 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.21'
+}
+
+group = 'dev.neosunset'
+version = providers.gradleProperty('modVersion').get()
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraftVersion}"
+    implementation "net.fabricmc:fabric-loader:${fabricLoaderVersion}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.13.4'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.named('processResources') {
+    def tokens = [version: project.version, minecraft: minecraftVersion, fabricLoader: fabricLoaderVersion]
+    inputs.properties(tokens)
+    filesMatching(['fabric.mod.json', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml']) {
+        expand(tokens)
+    }
+}
+
+tasks.named('jar') {
+    manifest.attributes('MixinConfigs': 'neosunset.mixins.json')
+    from('LICENSE')
+    reproducibleFileOrder = true
+    preserveFileTimestamps = false
+}

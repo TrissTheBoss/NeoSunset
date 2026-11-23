@@ -1,0 +1,4 @@
+{
+  "neosunset.options.presentation": "NeoSunset: Refresh-aware presentation",
+  "neosunset.options.presentation.tooltip": "Only applies with Unlimited FPS, VSync off and a verified mod profile. OpenGL skips surplus swaps. Vulkan uses Mailbox when available."
+}

@@ -1,0 +1,19 @@
+modLoader="lowcodefml"
+loaderVersion="[66,)"
+license="MIT"
+clientSideOnly=true
+issueTrackerURL="https://github.com/TrissTheBoss/NeoSunset/issues"
+
+[[mods]]
+modId="neosunset"
+version="${version}"
+displayName="NeoSunset"
+displayTest="IGNORE_ALL_VERSION"
+description="Optional refresh-aware presentation for the Minecraft Java client."
+
+[[dependencies.neosunset]]
+modId="minecraft"
+mandatory=true
+versionRange="[${minecraft}]"
+ordering="NONE"
+side="CLIENT"
