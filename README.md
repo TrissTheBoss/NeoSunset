@@ -23,7 +23,7 @@ The listed modern loader versions are covered by Linux software-rendered smoke t
 
 Use [GitHub Actions](https://github.com/TrissTheBoss/NeoSunset/actions/workflows/ci.yml) for development builds. The [release checklist](docs/RELEASE.md) governs which builds are ready for Modrinth. See [design and compatibility](docs/PRESENTATION.md) for the two backends, caveats and test matrix.
 
-The top-left in-game HUD shows **FPS** (Minecraft’s frame rate) and **Present attempts/s** (OpenGL swaps or Vulkan present calls). The latter excludes swaps skipped by NeoSunset but does not measure frames actually displayed: drivers, compositors and Vulkan Mailbox can discard or replace frames. The counters are independent of the presentation setting and hide with the HUD (`F1`).
+The top-left in-game HUD shows **FPS** (Minecraft’s frame rate) and **Present attempts/s** (OpenGL swaps or Vulkan present calls). The latter excludes swaps skipped by NeoSunset but does not measure frames actually displayed: drivers, compositors and Vulkan Mailbox can discard or replace frames. The counters are independent of the presentation setting. Turn them off under **Options → Video Settings → NeoSunset: Frame rate overlay**, or hide the entire HUD with `F1`.
 
 ## Troubleshooting
 

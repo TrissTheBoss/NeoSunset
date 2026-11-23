@@ -20,5 +20,6 @@ abstract class VideoSettingsMixin extends OptionsSubScreen {
     @Inject(method = "addOptions", at = @At("TAIL"))
     private void neosunset$addVideoOption(CallbackInfo callback) {
         list.addBig(PresentationSettings.option(minecraft));
+        list.addBig(PresentationSettings.overlayOption(minecraft));
     }
 }

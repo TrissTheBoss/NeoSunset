@@ -41,13 +41,27 @@ abstract class ClientSmokeMixin {
         verify(screen.children().stream().anyMatch(child ->
                         child instanceof OptionsList list && list.findOption(option) != null),
                 "Video Settings did not show the option");
+        var overlay = PresentationSettings.overlayOption(client);
+        verify(screen.children().stream().anyMatch(child ->
+                        child instanceof OptionsList list && list.findOption(overlay) != null),
+                "Video Settings did not show the frame rate overlay option");
+        verify(overlay.get(), "The frame rate overlay must default to on");
+        var overlayConfig = client.gameDirectory.toPath().resolve("config/neosunset-overlay.txt");
+        overlay.set(false);
+        verify(Files.readString(overlayConfig).equals("false\n"), "Overlay opt-out was not saved");
+        verify(!option.get(), "Hiding the overlay must not enable refresh-aware presentation");
+
         verify(ProfileCompatibility.isVerified(), "A clean loader profile was not recognized");
         verify(!option.get(), "The setting must default to off");
 
         client.options.framerateLimit().set(120);
         client.options.enableVsync().set(false);
         option.set(true);
-        verify(!PresentationSettings.eligible(client), "A finite limit must block presentation changes");
+        verify(!PresentationSettings.eligible(client), "A finite limit must block presentation changes with the overlay off");
+        overlay.set(true);
+        verify(Files.readString(overlayConfig).equals("true\n"), "Overlay opt-in was not saved");
+        verify(option.get(), "Showing the overlay must not disable refresh-aware presentation");
+        verify(!PresentationSettings.eligible(client), "A finite limit must block presentation changes with the overlay on");
         var config = client.gameDirectory.toPath().resolve("config/neosunset-presentation.txt");
         verify(Files.readString(config).equals("true\n"), "Opt-in was not saved");
         option.set(false);

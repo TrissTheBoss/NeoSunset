@@ -18,19 +18,31 @@ public final class PresentationSettings {
     private static final System.Logger LOGGER = System.getLogger("NeoSunset");
     private static final byte[] ENABLED = "true\n".getBytes(StandardCharsets.US_ASCII);
     private static OptionInstance<Boolean> option;
+    private static OptionInstance<Boolean> overlayOption;
 
     private PresentationSettings() {
     }
 
     public static OptionInstance<Boolean> option(Minecraft client) {
         if (option == null) {
-            Path config = client.gameDirectory.toPath().resolve("config/neosunset-presentation.txt");
-            option = OptionInstance.createBoolean("neosunset.options.presentation",
-                    OptionInstance.cachedConstantTooltip(
-                            Component.translatable("neosunset.options.presentation.tooltip")),
-                    load(config), value -> save(config, value));
+            option = createOption(client, "presentation", false);
         }
         return option;
+    }
+
+    public static OptionInstance<Boolean> overlayOption(Minecraft client) {
+        if (overlayOption == null) {
+            overlayOption = createOption(client, "overlay", true);
+        }
+        return overlayOption;
+    }
+
+    private static OptionInstance<Boolean> createOption(Minecraft client, String name, boolean defaultValue) {
+        Path config = client.gameDirectory.toPath().resolve("config/neosunset-" + name + ".txt");
+        String key = "neosunset.options." + name;
+        return OptionInstance.createBoolean(key,
+                OptionInstance.cachedConstantTooltip(Component.translatable(key + ".tooltip")),
+                load(config, defaultValue), value -> save(config, value));
     }
 
     public static boolean eligible(Minecraft client) {
@@ -44,14 +56,14 @@ public final class PresentationSettings {
                 tracker.getFramerateLimit());
     }
 
-    private static boolean load(Path config) {
+    private static boolean load(Path config, boolean defaultValue) {
         try (var input = Files.newInputStream(config)) {
             return Arrays.equals(input.readNBytes(ENABLED.length + 1), ENABLED);
         } catch (NoSuchFileException ignored) {
-            return false;
+            return defaultValue;
         } catch (IOException error) {
             LOGGER.log(System.Logger.Level.WARNING, "Could not read NeoSunset settings", error);
-            return false;
+            return defaultValue;
         }
     }
 

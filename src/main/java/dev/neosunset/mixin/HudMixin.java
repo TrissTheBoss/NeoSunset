@@ -1,6 +1,7 @@
 package dev.neosunset.mixin;
 
 import dev.neosunset.PresentRate;
+import dev.neosunset.PresentationSettings;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -26,7 +27,7 @@ abstract class HudMixin {
             at = @At("TAIL"))
     private void neosunset$showFrameRates(GuiGraphicsExtractor graphics, DeltaTracker delta, CallbackInfo callback) {
         long rate = PresentRate.CLIENT.sample(System.nanoTime());
-        if (isHidden) {
+        if (isHidden || !PresentationSettings.overlayOption(minecraft).get()) {
             return;
         }
         int fps = minecraft.getFps();
