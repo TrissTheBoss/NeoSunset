@@ -23,4 +23,13 @@ The listed modern loader versions are covered by Linux software-rendered smoke t
 
 Use [GitHub Actions](https://github.com/TrissTheBoss/NeoSunset/actions/workflows/ci.yml) for development builds. The [release checklist](docs/RELEASE.md) governs which builds are ready for Modrinth. See [design and compatibility](docs/PRESENTATION.md) for the two backends, caveats and test matrix.
 
+## Troubleshooting
+
+If enabling NeoSunset has no visible effect, start with a profile that has only NeoSunset and its loader. Keep the game focused and confirm that **Max Framerate** is **Unlimited** and **VSync** is off.
+
+- **OpenGL:** NeoSunset leaves swaps alone if it can't determine the display refresh rate, or if the swap interval is unknown or nonzero.
+- **Vulkan:** NeoSunset keeps the game's present mode unless the game chose Immediate and the device supports Mailbox.
+
+The FPS counter alone isn't a reliable check: Minecraft still renders frames even when NeoSunset skips an OpenGL swap. See the [manual verification table](docs/PRESENTATION.md#manual-verification) for expected behavior.
+
 NeoSunset is independent of Mojang and Microsoft. Source is under the [MIT License](LICENSE).
