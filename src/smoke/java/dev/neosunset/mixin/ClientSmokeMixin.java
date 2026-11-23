@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.VideoSettingsScreen;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -17,13 +18,16 @@ import java.util.Arrays;
 
 @Mixin(Minecraft.class)
 abstract class ClientSmokeMixin {
+    @Unique private boolean neosunset$smokeStarted;
+
     @Inject(method = "renderFrame", at = @At("TAIL"), require = 1)
     private void neosunset$verifyClient(boolean tick, CallbackInfo callback) throws Exception {
         Minecraft client = (Minecraft) (Object) this;
         Screen parent = client.gui.screen();
-        if (client.gui.overlay() != null || parent == null) {
+        if (neosunset$smokeStarted || !client.isRunning() || client.gui.overlay() != null || parent == null) {
             return;
         }
+        neosunset$smokeStarted = true;
         verify(Arrays.stream(GlSurface.class.getDeclaredMethods())
                 .anyMatch(method -> method.getName().contains("neosunset$swapWhenDue")),
                 "OpenGL swap hook did not apply");
@@ -49,6 +53,7 @@ abstract class ClientSmokeMixin {
         option.set(false);
         verify(Files.readString(config).equals("false\n"), "Opt-out was not saved");
         Files.writeString(client.gameDirectory.toPath().resolve("neosunset-smoke-pass"), "PASS\n");
+        System.getLogger("NeoSunset").log(System.Logger.Level.INFO, "Client smoke checks passed");
         client.stop();
     }
 

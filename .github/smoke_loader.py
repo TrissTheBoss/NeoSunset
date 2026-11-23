@@ -89,7 +89,10 @@ def main():
         "jvmArguments": ["-Xmx2G"],
     })
     print(f"Launching {profile}", flush=True)
-    subprocess.run(arguments, cwd=root, timeout=160, check=True)
+    try:
+        subprocess.run(arguments, cwd=root, timeout=160, check=True)
+    except subprocess.TimeoutExpired:
+        raise SystemExit(f"{profile} did not exit within the 160-second client timeout") from None
 
 
 if __name__ == "__main__":
