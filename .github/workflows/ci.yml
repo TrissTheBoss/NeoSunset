@@ -85,10 +85,15 @@ jobs:
             build/libs/neosunset-*.jar 2>&1 | tee smoke.log
           test "$(cat "$RUNNER_TEMP/smoke/neosunset-smoke-pass")" = PASS
 
+  additional-loaders:
+    name: Additional loader checks
+    needs: build
+    uses: ./.github/workflows/loader-smoke.yml
+
   publish:
     name: Publish verified version to Modrinth
     if: github.event_name == 'push' && needs.build.outputs.publish == 'true'
-    needs: [build, client]
+    needs: [build, client, additional-loaders]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
@@ -100,13 +105,22 @@ jobs:
           name: NeoSunset-jar
           path: release
       - name: Publish on Modrinth
+        id: modrinth
         uses: cloudnode-pro/modrinth-publish@3870f66007063f03fb70118ca9eddbc09a4ba666 # v2.5.2
         with:
           token: ${{ secrets.modrinth_pat }}
           project: ${{ secrets.modrinth_id }}
           version: ${{ needs.build.outputs.version }}
           channel: ${{ needs.build.outputs.channel }}
-          loaders: fabric
+          loaders: |
+            fabric
+            quilt
+            forge
+            neoforge
           game-versions: '26.3'
           files: release/neosunset-${{ needs.build.outputs.version }}.jar
-          changelog: 'See the source and release notes at https://github.com/TrissTheBoss/NeoSunset/tree/${{ github.sha }}.'
+          changelog: 'Release notes and source: https://github.com/TrissTheBoss/NeoSunset/tree/${{ github.sha }}.'
+      - name: Record the published version ID
+        env:
+          VERSION_ID: ${{ steps.modrinth.outputs.version-id }}
+        run: printf 'Modrinth version ID %s\n' "$VERSION_ID" >> "$GITHUB_STEP_SUMMARY"
