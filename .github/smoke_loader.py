@@ -15,12 +15,12 @@ LOADERS = {
     "fabric": (
         "fabric-loader-0.19.5-26.3",
         "https://meta.fabricmc.net/v2/versions/loader/26.3/0.19.5/profile/json",
-        "974d1a80e476e6ec1bdc09b15b61a9777deeec9992c2e39f2475876d158749ec",
+        "b607511943b20dc1aec2549b6e3a520faa636aa79ee9acfd6041677916f9b1a5",
     ),
     "quilt": (
         "quilt-loader-0.30.2-26.3",
         "https://meta.quiltmc.org/v3/versions/loader/26.3/0.30.2/profile/json",
-        "6c6f9a7f8db1f42b34ddfb0094ba0e01f946c51b8c2702ad5ef269561797b3e0",
+        "c591be48451a4e986647fcad3ca2832a14571443f8de1baf7db9998366361ae1",
     ),
     "forge": (
         "26.3-forge-66.1.5",
@@ -41,17 +41,21 @@ def install_loader(loader, root):
     print(f"Retrieving {loader} installer or profile", flush=True)
     with urlopen(request, timeout=30) as response:
         data = response.read(16 * 1024 * 1024 + 1)
-    if sha256(data).hexdigest() != expected:
-        raise ValueError(f"{loader} installer/profile checksum mismatch")
-
     if loader in {"fabric", "quilt"}:
         spec = json.loads(data)
+        # These timestamps may be regenerated without changing launcher dependencies.
+        content = {key: value for key, value in spec.items() if key not in {"time", "releaseTime"}}
+        canonical = json.dumps(content, sort_keys=True, separators=(",", ":")).encode()
+        if sha256(canonical).hexdigest() != expected:
+            raise ValueError(f"{loader} launcher profile checksum mismatch")
         if spec["id"] != profile or spec["inheritsFrom"] != GAME:
             raise ValueError("Unexpected launcher profile ID or base game version")
         version_dir = root / "versions" / profile
         version_dir.mkdir(parents=True)
         (version_dir / f"{profile}.json").write_bytes(data)
     else:
+        if sha256(data).hexdigest() != expected:
+            raise ValueError(f"{loader} installer checksum mismatch")
         installer = root / "installer.jar"
         installer.write_bytes(data)
         (root / "launcher_profiles.json").write_text('{"profiles":{}}')
