@@ -46,7 +46,8 @@ with ZipFile(Path(f"build/libs/neosunset-{version}.jar")) as jar:
     assert icon == Path("src/main/resources", icon_path).read_bytes()
     assert icon.startswith(b"\x89PNG\r\n\x1a\n") and icon[12:16] == b"IHDR"
     assert unpack(">II", icon[16:24]) == (128, 128)
-    assert len(mixin["client"]) == 4
+    expected_mixin = json.loads(Path("src/main/resources/neosunset.mixins.json").read_text(encoding="utf-8"))
+    assert mixin == expected_mixin, "Packaged Mixin config differs from the production source config"
     assert not any("ClientSmokeMixin" in name for name in names)
     for client in mixin["client"]:
         assert f"{mixin['package'].replace('.', '/')}/{client}.class" in names
