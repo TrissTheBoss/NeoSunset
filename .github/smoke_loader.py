@@ -6,12 +6,17 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 from minecraft_launcher_lib import command, install
 
 GAME = "26.3"
 LOADERS = {
+    "fabric": (
+        "fabric-loader-0.19.5-26.3",
+        "https://meta.fabricmc.net/v2/versions/loader/26.3/0.19.5/profile/json",
+        "974d1a80e476e6ec1bdc09b15b61a9777deeec9992c2e39f2475876d158749ec",
+    ),
     "quilt": (
         "quilt-loader-0.30.2-26.3",
         "https://meta.quiltmc.org/v3/versions/loader/26.3/0.30.2/profile/json",
@@ -32,15 +37,17 @@ LOADERS = {
 
 def install_loader(loader, root):
     profile, url, expected = LOADERS[loader]
-    with urlopen(url, timeout=30) as response:
+    request = Request(url, headers={"User-Agent": "NeoSunset-GitHub-CI/1.0 (+https://github.com/TrissTheBoss/NeoSunset)"})
+    print(f"Retrieving {loader} installer or profile", flush=True)
+    with urlopen(request, timeout=30) as response:
         data = response.read(16 * 1024 * 1024 + 1)
     if sha256(data).hexdigest() != expected:
         raise ValueError(f"{loader} installer/profile checksum mismatch")
 
-    if loader == "quilt":
+    if loader in {"fabric", "quilt"}:
         spec = json.loads(data)
         if spec["id"] != profile or spec["inheritsFrom"] != GAME:
-            raise ValueError("Unexpected Quilt profile ID or base game version")
+            raise ValueError("Unexpected launcher profile ID or base game version")
         version_dir = root / "versions" / profile
         version_dir.mkdir(parents=True)
         (version_dir / f"{profile}.json").write_bytes(data)
@@ -51,6 +58,7 @@ def install_loader(loader, root):
         subprocess.run(["java", "-jar", str(installer), "--installClient", str(root)],
                        cwd=root, timeout=240, check=True)
 
+    print(f"Installing {profile}", flush=True)
     install.install_minecraft_version(profile, root)
     return profile
 
@@ -59,6 +67,7 @@ def main():
     loader, root_path, jar_path = sys.argv[1:]
     root = Path(root_path).resolve()
     root.mkdir(parents=True)
+    print(f"Installing Minecraft {GAME}", flush=True)
     install.install_minecraft_version(GAME, root)
     profile = install_loader(loader, root)
     mods = root / "mods"
@@ -75,7 +84,8 @@ def main():
         "executablePath": "java",
         "jvmArguments": ["-Xmx2G"],
     })
-    subprocess.run(arguments, cwd=root, timeout=220, check=True)
+    print(f"Launching {profile}", flush=True)
+    subprocess.run(arguments, cwd=root, timeout=160, check=True)
 
 
 if __name__ == "__main__":

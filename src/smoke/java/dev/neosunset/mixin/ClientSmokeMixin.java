@@ -5,7 +5,7 @@ import dev.neosunset.PresentationSettings;
 import dev.neosunset.ProfileCompatibility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.OptionsList;
-import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.VideoSettingsScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,7 +20,8 @@ abstract class ClientSmokeMixin {
     @Inject(method = "renderFrame", at = @At("TAIL"), require = 1)
     private void neosunset$verifyClient(boolean tick, CallbackInfo callback) throws Exception {
         Minecraft client = (Minecraft) (Object) this;
-        if (client.gui.overlay() != null || !(client.gui.screen() instanceof TitleScreen title)) {
+        Screen parent = client.gui.screen();
+        if (client.gui.overlay() != null || parent == null) {
             return;
         }
         verify(Arrays.stream(GlSurface.class.getDeclaredMethods())
@@ -30,7 +31,7 @@ abstract class ClientSmokeMixin {
                 .anyMatch(method -> method.getName().contains("neosunset$preferMailbox")),
                 "Vulkan mode hook did not apply");
 
-        VideoSettingsScreen screen = new VideoSettingsScreen(title, client, client.options);
+        VideoSettingsScreen screen = new VideoSettingsScreen(parent, client, client.options);
         client.gui.setScreen(screen);
         var option = PresentationSettings.option(client);
         verify(screen.children().stream().anyMatch(child ->

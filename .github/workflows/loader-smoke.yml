@@ -40,6 +40,7 @@ jobs:
           LOADER: ${{ matrix.loader }}
           LIBGL_ALWAYS_SOFTWARE: '1'
           SDL_VIDEO_DRIVER: x11
+        shell: bash
         run: |
           timeout --kill-after=20s 10m xvfb-run -a -s '-screen 0 1280x720x24' \
             .ci-venv/bin/python .github/smoke_loader.py "$LOADER" "$RUNNER_TEMP/smoke" \
