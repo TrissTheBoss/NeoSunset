@@ -35,6 +35,10 @@ jobs:
         run: |
           python3 -m venv .ci-venv
           .ci-venv/bin/pip install --disable-pip-version-check minecraft-launcher-lib==8.0
+      - name: Install software graphics drivers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgl1-mesa-dri libglx-mesa0 mesa-utils mesa-vulkan-drivers
       - name: Launch Minecraft 26.3 and check the option
         env:
           LOADER: ${{ matrix.loader }}
@@ -42,7 +46,8 @@ jobs:
           SDL_VIDEO_DRIVER: x11
         shell: bash
         run: |
-          timeout --kill-after=20s 10m xvfb-run -a -s '-screen 0 1280x720x24' \
+          export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          timeout --kill-after=20s 10m xvfb-run -a -s '-screen 0 1280x720x24 +extension GLX +render -noreset' \
             .ci-venv/bin/python .github/smoke_loader.py "$LOADER" "$RUNNER_TEMP/smoke" \
             build/libs/neosunset-*.jar 2>&1 | tee smoke.log
           test "$(cat "$RUNNER_TEMP/smoke/neosunset-smoke-pass")" = PASS
