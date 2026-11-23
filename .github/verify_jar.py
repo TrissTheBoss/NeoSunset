@@ -27,6 +27,7 @@ with ZipFile(Path(f"build/libs/neosunset-{version}.jar")) as jar:
     assert fabric["version"] == version and fabric["depends"]["minecraft"] == f"={game}"
     assert fabric["environment"] == "client" and "LICENSE" in names
     assert len(mixin["client"]) == 4
+    assert not any("ClientSmokeMixin" in name for name in names)
     for client in mixin["client"]:
         assert f"{mixin['package'].replace('.', '/')}/{client}.class" in names
     for file in ("mods.toml", "neoforge.mods.toml"):

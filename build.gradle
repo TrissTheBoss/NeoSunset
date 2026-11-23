@@ -36,3 +36,13 @@ tasks.named('jar') {
     reproducibleFileOrder = true
     preserveFileTimestamps = false
 }
+
+if (providers.gradleProperty('smokeClient').isPresent()) {
+    sourceSets.main.java.srcDir('src/smoke/java')
+    tasks.named('processResources') {
+        inputs.property('smokeClient', true)
+        filesMatching('neosunset.mixins.json') {
+            filter { line -> line == '  "client": [' ? line + '\n    "ClientSmokeMixin",' : line }
+        }
+    }
+}
