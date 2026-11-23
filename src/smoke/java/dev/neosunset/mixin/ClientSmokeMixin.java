@@ -36,7 +36,7 @@ abstract class ClientSmokeMixin {
         verify(screen.children().stream().anyMatch(child ->
                         child instanceof OptionsList list && list.findOption(option) != null),
                 "Video Settings did not show the option");
-        verify(ProfileCompatibility.isVerified(), "A clean Fabric profile was not recognized");
+        verify(ProfileCompatibility.isVerified(), "A clean loader profile was not recognized");
         verify(!option.get(), "The setting must default to off");
 
         client.options.framerateLimit().set(120);

@@ -3,3 +3,6 @@ build/
 run/
 .idea/
 *.iml
+
+.ci-venv/
+smoke.log
