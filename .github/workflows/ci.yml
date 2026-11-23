@@ -112,11 +112,7 @@ jobs:
           project: ${{ secrets.modrinth_id }}
           version: ${{ needs.build.outputs.version }}
           channel: ${{ needs.build.outputs.channel }}
-          loaders: |
-            fabric
-            quilt
-            forge
-            neoforge
+          loaders: '["fabric", "quilt", "forge", "neoforge"]'
           game-versions: '26.3'
           files: release/neosunset-${{ needs.build.outputs.version }}.jar
           changelog: 'Release notes and source: https://github.com/TrissTheBoss/NeoSunset/tree/${{ github.sha }}.'

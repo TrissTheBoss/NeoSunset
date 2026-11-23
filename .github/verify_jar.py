@@ -22,13 +22,13 @@ is_tag = os.environ["IS_TAG"] == "true"
 if is_tag and os.environ["GITHUB_REF_NAME"] != f"v{version}":
     raise SystemExit("Tag must match the mod version.")
 
-notes = Path("releases") / f"{version}.md"
+notes = Path("releases") / f"v{version}.md"
 publish = is_tag
 if (os.environ["GITHUB_EVENT_NAME"] == "push"
         and os.environ["GITHUB_REF"] == "refs/heads/main" and notes.is_file()):
     event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
     changed = subprocess.check_output(
-        ["git", "diff", "--name-only", "--diff-filter=A", event["before"], "HEAD", "--", str(notes)],
+        ["git", "diff", "--name-only", "--no-renames", "--diff-filter=A", event["before"], "HEAD", "--", str(notes)],
         text=True,
     )
     publish = changed.strip() == str(notes)
