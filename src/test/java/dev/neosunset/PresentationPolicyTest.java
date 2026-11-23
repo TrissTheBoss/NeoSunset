@@ -1,5 +1,7 @@
 package dev.neosunset;
 
+import com.mojang.renderpearl.api.device.GpuSurface.Configuration;
+import com.mojang.renderpearl.api.device.GpuSurface.PresentMode;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -7,6 +9,20 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PresentationPolicyTest {
+    @Test
+    void prefersMailboxOnlyWhenAvailableAndReplacingImmediate() {
+        var immediate = new Configuration(1920, 1080, PresentMode.IMMEDIATE);
+        assertEquals(new Configuration(1920, 1080, PresentMode.MAILBOX),
+                FramePolicy.preferMailbox(immediate, true));
+        assertSame(immediate, FramePolicy.preferMailbox(immediate, false));
+
+        for (var mode : PresentMode.values()) {
+            if (mode != PresentMode.IMMEDIATE) {
+                var configuration = new Configuration(1920, 1080, mode);
+                assertSame(configuration, FramePolicy.preferMailbox(configuration, true));
+            }
+        }
+    }
     @Test
     void needsOptInUncappedFocusedCompatibleProfileWithoutVsync() {
         assertTrue(FramePolicy.eligible(true, true, true, false, 260, 260));

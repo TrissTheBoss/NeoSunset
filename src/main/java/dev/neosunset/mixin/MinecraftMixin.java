@@ -2,6 +2,7 @@ package dev.neosunset.mixin;
 
 import com.mojang.renderpearl.api.device.GpuSurface;
 import com.mojang.renderpearl.api.device.GpuSurface.PresentMode;
+import dev.neosunset.FramePolicy;
 import dev.neosunset.PresentationSettings;
 import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Final;
@@ -35,9 +36,6 @@ abstract class MinecraftMixin {
     @ModifyArg(method = "renderFrame", at = @At(value = "INVOKE",
             target = "Lcom/mojang/renderpearl/api/device/GpuSurface;configure(Lcom/mojang/renderpearl/api/device/GpuSurface$Configuration;)V"))
     private GpuSurface.Configuration neosunset$preferMailbox(GpuSurface.Configuration configuration) {
-        if (neosunset$useMailbox && configuration.presentMode() == PresentMode.IMMEDIATE) {
-            return new GpuSurface.Configuration(configuration.width(), configuration.height(), PresentMode.MAILBOX);
-        }
-        return configuration;
+        return FramePolicy.preferMailbox(configuration, neosunset$useMailbox);
     }
 }
