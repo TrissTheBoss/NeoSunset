@@ -17,10 +17,12 @@ jobs:
     outputs:
       version: ${{ steps.release.outputs.version }}
       channel: ${{ steps.release.outputs.channel }}
+      publish: ${{ steps.release.outputs.publish }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
         with:
           distribution: temurin
@@ -84,13 +86,13 @@ jobs:
           test "$(cat "$RUNNER_TEMP/smoke/neosunset-smoke-pass")" = PASS
 
   publish:
-    name: Publish verified tag to Modrinth
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    name: Publish verified version to Modrinth
+    if: github.event_name == 'push' && needs.build.outputs.publish == 'true'
     needs: [build, client]
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     concurrency:
-      group: modrinth-${{ github.ref }}
+      group: modrinth-${{ needs.build.outputs.version }}
       cancel-in-progress: false
     steps:
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0

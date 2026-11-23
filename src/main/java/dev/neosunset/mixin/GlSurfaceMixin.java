@@ -9,26 +9,30 @@ import dev.neosunset.SwapCadence;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.sdl.SDLVideo;
 import org.lwjgl.system.MemoryStack;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GlSurface.class)
 abstract class GlSurfaceMixin {
+    @Shadow @Final private long windowHandle;
     @Unique private final SwapCadence neosunset$cadence = new SwapCadence();
     @Unique private boolean neosunset$wasEligible;
     @Unique private int neosunset$displayGeneration;
     @Unique private long neosunset$lastProbe;
 
-    @Redirect(method = "present", at = @At(value = "INVOKE",
-            target = "Lorg/lwjgl/sdl/SDLVideo;SDL_GL_SwapWindow(J)Z"))
-    private boolean neosunset$swapWhenDue(long handle) {
+    @Inject(method = "present", at = @At(value = "INVOKE",
+            target = "Lorg/lwjgl/sdl/SDLVideo;SDL_GL_SwapWindow(J)Z"), cancellable = true)
+    private void neosunset$swapWhenDue(CallbackInfo callback) {
         Minecraft client = Minecraft.getInstance();
-        if (!PresentationSettings.eligible(client) || client.getWindow().handle() != handle
+        if (!PresentationSettings.eligible(client) || client.getWindow().handle() != windowHandle
                 || !FramePolicy.isUnlimited(client.gameRenderer.gameRenderState().framerateLimit)) {
             neosunset$wasEligible = false;
-            return SDLVideo.SDL_GL_SwapWindow(handle);
+            return;
         }
 
         long now = System.nanoTime();
@@ -48,6 +52,8 @@ abstract class GlSurfaceMixin {
         }
 
         // Vanilla already rendered, blitted and submitted this frame. Leave surface bookkeeping intact.
-        return !neosunset$cadence.shouldSwap(now) || SDLVideo.SDL_GL_SwapWindow(handle);
+        if (!neosunset$cadence.shouldSwap(now)) {
+            callback.cancel();
+        }
     }
 }

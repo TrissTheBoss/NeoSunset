@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import tomllib
 from zipfile import ZipFile
 
@@ -17,8 +18,20 @@ game = properties["minecraftVersion"]
 format_match = re.fullmatch(r"\d+\.\d+\.\d+(?:-(alpha|beta)\.\d+)?", version)
 if format_match is None:
     raise SystemExit("Expected a stable version or a numbered alpha/beta version.")
-if os.environ["IS_TAG"] == "true" and os.environ["GITHUB_REF_NAME"] != f"v{version}":
+is_tag = os.environ["IS_TAG"] == "true"
+if is_tag and os.environ["GITHUB_REF_NAME"] != f"v{version}":
     raise SystemExit("Tag must match the mod version.")
+
+notes = Path("releases") / f"{version}.md"
+publish = is_tag
+if (os.environ["GITHUB_EVENT_NAME"] == "push"
+        and os.environ["GITHUB_REF"] == "refs/heads/main" and notes.is_file()):
+    event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-only", "--diff-filter=A", event["before"], "HEAD", "--", str(notes)],
+        text=True,
+    )
+    publish = changed.strip() == str(notes)
 
 with ZipFile(Path(f"build/libs/neosunset-{version}.jar")) as jar:
     names = set(jar.namelist())
@@ -43,3 +56,4 @@ with ZipFile(Path(f"build/libs/neosunset-{version}.jar")) as jar:
 with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
     print(f"version={version}", file=output)
     print(f"channel={format_match[1] or 'release'}", file=output)
+    print(f"publish={str(publish).lower()}", file=output)
